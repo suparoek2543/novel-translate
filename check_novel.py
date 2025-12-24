@@ -17,7 +17,7 @@ DB_FILE = "last_episode_discord.txt"
 # ตั้งค่า Gemini
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-2.5-pro')
 else:
     print("❌ ไม่พบ GEMINI_API_KEY กรุณาตั้งค่าใน GitHub Secrets")
     exit(1)
