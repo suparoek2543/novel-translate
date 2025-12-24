@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install dependencies
-        run: pip install feedparser requests beautifulsoup4 deep-translator
+        run: pip install google-generativeai feedparser requests beautifulsoup4
       - name: Run script
         run: python check_novel.py
         env:
