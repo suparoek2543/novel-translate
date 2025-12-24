@@ -1,9 +1,10 @@
 from google import genai
 import cloudscraper
+import requests  # <--- เติมตัวนี้กลับเข้ามาครับ
 from bs4 import BeautifulSoup
 import time
 import os
-import re  # <--- ต้องมีตัวนี้สำหรับการหา Pattern
+import re
 
 # ==========================================
 # ⚙️ ส่วนตั้งค่า
@@ -17,11 +18,14 @@ DB_FILE = "last_episode_discord.txt"
 
 # ตั้งค่า Client
 if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+    except Exception as e:
+        print(f"❌ Error initializing Gemini: {e}")
+        client = None
 else:
-    # client = genai.Client(api_key="ใส่_KEY_ตรงนี้ถ้าจะเทสในเครื่อง")
-    print("⚠️ ไม่พบ GEMINI_API_KEY (ถ้าไม่ได้ใส่ใน Env บอทจะแปลไม่ได้)")
-    pass
+    print("⚠️ ไม่พบ GEMINI_API_KEY")
+    client = None
 
 # สร้างตัวยิงเว็บ (Cloudscraper)
 scraper = cloudscraper.create_scraper()
@@ -50,14 +54,13 @@ def get_latest_episode_from_web():
         page_title = soup.title.text.strip() if soup.title else "No Title"
         print(f"✅ เข้าถึงหน้าเว็บ: {page_title[:30]}...") 
 
-        # --- วิธีใหม่: หา Link ที่มีคำว่า /episodes/ ตัวเลข ---
         # Pattern คือ /works/เลขไอดี/episodes/เลขไอดี
         target_pattern = re.compile(r'/works/\d+/episodes/\d+')
         
         episode_links = soup.find_all('a', href=target_pattern)
         
         if episode_links:
-            # ดึงตัวสุดท้ายของลิสต์ ซึ่งมักจะเป็นตอนล่าสุดเสมอ
+            # ดึงตัวสุดท้ายของลิสต์
             last_ep = episode_links[-1]
             
             # ดึงชื่อตอน
@@ -77,10 +80,6 @@ def get_latest_episode_from_web():
             return Episode(title, link)
         else:
             print("❌ ไม่พบลิงก์ตอนนิยายเลย")
-            # Debug: บันทึกไฟล์ HTML ออกมาดูว่าหน้าตาเป็นยังไง
-            with open("debug_page.html", "w", encoding="utf-8") as f:
-                f.write(response.text)
-            print("⚠️ บันทึกไฟล์ debug_page.html ไว้ให้ตรวจสอบแล้ว")
             return None
 
     except Exception as e:
@@ -105,7 +104,7 @@ def get_novel_content(url):
         return None
 
 def translate_with_gemini(text):
-    if not text: return None
+    if not text or not client: return None
     
     print("⏳ กำลังส่งให้ Gemini แปล...")
     prompt = f"""
@@ -119,7 +118,7 @@ def translate_with_gemini(text):
     """
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro', 
+            model='gemini-1.5-flash', 
             contents=prompt
         )
         return response.text
@@ -130,7 +129,6 @@ def translate_with_gemini(text):
 def send_to_discord(title, link, content):
     if not DISCORD_WEBHOOK_URL:
         print("⚠️ ไม่มี Webhook URL (แสดงผลหน้าจอแทน)")
-        # print(content[:200]) # ปริ้นท์เทส
         return
 
     print("🚀 กำลังส่งเข้า Discord...")
