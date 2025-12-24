@@ -1,0 +1,164 @@
+from google import genai
+import cloudscraper
+import requests
+from bs4 import BeautifulSoup
+import time
+import os
+import re
+
+# ==========================================
+# ⚙️ ส่วนตั้งค่า
+# ==========================================
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
+NOVEL_MAIN_URL = "https://kakuyomu.jp/works/822139839754922306"
+DB_FILE = "last_episode_discord.txt" # เอาไว้อัปเดตตอนจบงาน
+
+# ตั้งค่า Client
+if GEMINI_API_KEY:
+    try:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        client = None
+else:
+    print("⚠️ ไม่พบ GEMINI_API_KEY")
+    client = None
+
+scraper = cloudscraper.create_scraper()
+
+# ==========================================
+# 🛠️ ฟังก์ชันทำงาน
+# ==========================================
+
+class Episode:
+    def __init__(self, title, link):
+        self.title = title
+        self.link = link
+
+def get_all_episodes():
+    """ดึงรายชื่อตอน 'ทั้งหมด' จากหน้าสารบัญ"""
+    print(f"📖 กำลังโหลดหน้าสารบัญ: {NOVEL_MAIN_URL}")
+    try:
+        response = scraper.get(NOVEL_MAIN_URL)
+        if response.status_code != 200: return []
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Pattern ลิงก์ตอน
+        target_pattern = re.compile(r'/works/\d+/episodes/\d+')
+        
+        # หาลิงก์ทั้งหมด
+        raw_links = soup.find_all('a', href=target_pattern)
+        
+        episodes = []
+        seen_urls = set()
+
+        for tag in raw_links:
+            href = tag['href']
+            # แปลงเป็น Full URL
+            full_link = "https://kakuyomu.jp" + href if href.startswith('/') else href
+            
+            # ป้องกันลิงก์ซ้ำ
+            if full_link in seen_urls:
+                continue
+            seen_urls.add(full_link)
+
+            # ดึงชื่อตอน
+            title = tag.text.strip()
+            if not title:
+                span = tag.find('span')
+                title = span.text.strip() if span else "ตอนที่ (ไม่ทราบชื่อ)"
+
+            episodes.append(Episode(title, full_link))
+
+        print(f"✅ พบทั้งหมด {len(episodes)} ตอน")
+        return episodes # ส่งกลับเป็น List เรียงตามลำดับหน้าเว็บ (ปกติคือ 1 -> ล่าสุด)
+
+    except Exception as e:
+        print(f"❌ Error checking main page: {e}")
+        return []
+
+def get_content(url):
+    try:
+        response = scraper.get(url)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        body = soup.select_one('.widget-episodeBody')
+        return body.get_text(separator="\n", strip=True) if body else None
+    except:
+        return None
+
+def translate(text):
+    if not text or not client: return None
+    prompt = f"แปลนิยายญี่ปุ่นนี้เป็นไทย สำนวนวัยรุ่น อ่านง่าย:\n{text}"
+    try:
+        # ใช้ model flash เพื่อความเร็ว
+        return client.models.generate_content(model='gemini-1.5-flash', contents=prompt).text
+    except:
+        return None
+
+def send_discord(title, link, content):
+    if not DISCORD_WEBHOOK_URL: return
+    
+    # 1. หัวข้อ
+    requests.post(DISCORD_WEBHOOK_URL, json={
+        "content": f"📚 **[แปลย้อนหลัง]**\n**{title}**\n🔗 {link}\n*(กำลังแปล...)*"
+    })
+    
+    # 2. เนื้อหา (แบ่งท่อน)
+    chunk_size = 1900
+    chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
+    for i, chunk in enumerate(chunks):
+        msg = f"**[{i+1}/{len(chunks)}]**\n{chunk}" if len(chunks) > 1 else chunk
+        requests.post(DISCORD_WEBHOOK_URL, json={"content": msg})
+        time.sleep(1)
+    
+    # 3. จบ
+    requests.post(DISCORD_WEBHOOK_URL, json={"content": "✅ **จบตอน**"})
+
+# ==========================================
+# 🚀 Main Loop (Batch)
+# ==========================================
+
+def main():
+    print("🚀 เริ่มระบบแปลย้อนหลัง (Batch Translation)...")
+    
+    all_episodes = get_all_episodes()
+    
+    if not all_episodes:
+        print("❌ ไม่พบตอน หรือเว็บเข้าไม่ได้")
+        return
+
+    # วนลูปแปลทีละตอน
+    for i, ep in enumerate(all_episodes):
+        print(f"\n[{i+1}/{len(all_episodes)}] กำลังทำ: {ep.title}")
+        
+        # 1. ดึงเนื้อหา
+        content = get_content(ep.link)
+        if not content:
+            print(f"   ❌ ข้าม (ดึงเนื้อหาไม่ได้): {ep.link}")
+            continue
+
+        # 2. แปล
+        print("   ⏳ แปลภาษา...")
+        translated = translate(content)
+        if not translated:
+            print("   ❌ ข้าม (แปลไม่ผ่าน)")
+            continue
+
+        # 3. ส่ง Discord
+        print("   🚀 ส่ง Discord...")
+        send_discord(ep.title, ep.link, translated)
+
+        # 4. อัปเดตไฟล์ล่าสุด (เผื่อบอทรายวันทำงานต่อจะได้ไม่แปลซ้ำ)
+        with open(DB_FILE, "w") as f:
+            f.write(ep.link)
+
+        # 5. พักเครื่อง (สำคัญมาก! เพื่อไม่ให้โดนแบน)
+        print("   💤 พัก 30 วินาที...")
+        time.sleep(30) 
+
+    print("\n🎉 แปลครบทุกตอนแล้วครับ!")
+
+if __name__ == "__main__":
+    main()
