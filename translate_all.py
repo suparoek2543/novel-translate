@@ -115,22 +115,14 @@ def translate(text):
     เนื้อหาต้นฉบับ:
     {text}
     """
-    try:
+        try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro',
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                safety_settings=[
-                    types.SafetySetting(category='HARM_CATEGORY_HARASSMENT', threshold='BLOCK_NONE'),
-                    types.SafetySetting(category='HARM_CATEGORY_HATE_SPEECH', threshold='BLOCK_NONE'),
-                    types.SafetySetting(category='HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold='BLOCK_NONE'),
-                    types.SafetySetting(category='HARM_CATEGORY_DANGEROUS_CONTENT', threshold='BLOCK_NONE')
-                ]
-            )
+            model='gemini-2.5-pro', 
+            contents=prompt
         )
         return response.text
     except Exception as e:
-        print(f"   ❌ Gemini Error: {e}")
+        print(f"❌ Translation Error: {e}")
         return None
 
 def send_discord(ep_num, title, link, content):
