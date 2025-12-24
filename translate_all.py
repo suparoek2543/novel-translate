@@ -109,7 +109,7 @@ def translate(text):
     prompt = f"แปลนิยายญี่ปุ่นนี้เป็นไทย สำนวนวัยรุ่น อ่านง่าย:\n{text}"
     try:
         response = client.models.generate_content(
-            model='gemini-3-pro',
+            model='gemini-2.5-pro',
             contents=prompt,
             config=types.GenerateContentConfig(
                 safety_settings=[
