@@ -31,16 +31,35 @@ def get_latest_episode():
     return None
 
 def get_novel_content(url):
+    print(f"กำลังดึงเนื้อหาจาก: {url}")
     try:
-        response = requests.get(url)
+        # ✅ เพิ่ม headers เพื่อหลอกเว็บว่าเป็นเบราว์เซอร์คนปกติ
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        
+        # เช็คสถานะการเชื่อมต่อ (ถ้าไม่ใช่ 200 แสดงว่ามีปัญหา)
+        if response.status_code != 200:
+            print(f"❌ เข้าเว็บไม่ได้ Status Code: {response.status_code}")
+            return None
+
         soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # ลองหาเนื้อหาด้วย Class หลัก
         body_elem = soup.select_one('.widget-episodeBody')
+        
         if body_elem:
             return body_elem.get_text(separator="\n", strip=True)
-        return ""
+        else:
+            print("❌ หาเนื้อหาไม่เจอ (อาจจะเปลี่ยน Class หรือเว็บโหลดไม่สมบูรณ์)")
+            # print(response.text[:500]) # เอา comment ออกถ้าอยากเห็น HTML ที่ได้มา
+            return None
+            
     except Exception as e:
-        print(f"❌ Error fetching content: {e}")
+        print(f"❌ Error: {e}")
         return None
+
 
 def translate_with_gemini(text):
     prompt = f"""
