@@ -30,7 +30,8 @@ jobs:
       - name: Run Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          WEBHOOK_NOVEL_1: ${{ secrets.WEBHOOK_NOVEL_1 }}
+          WEBHOOK_NOVEL_2: ${{ secrets.WEBHOOK_NOVEL_2 }}
         run: python check_novel.py
 
       - name: Commit and Push DB
