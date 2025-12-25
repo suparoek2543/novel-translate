@@ -14,7 +14,7 @@ from urllib.parse import urljoin
 # ⚙️ ส่วนตั้งค่า
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
-NOVEL_MAIN_URL = "https://kakuyomu.jp/works/16816700429097793676"
+NOVEL_MAIN_URL = "https://kakuyomu.jp/works/822139841708705081"
 
 # ไฟล์ที่จะเก็บข้อมูลนิยาย (Database)
 JSON_DB_FILE = "novels.json"
