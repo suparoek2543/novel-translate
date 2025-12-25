@@ -1,188 +1,231 @@
 from google import genai
+from google.genai import types
 import cloudscraper
-import requests  # <--- เติมตัวนี้กลับเข้ามาครับ
+import requests
 from bs4 import BeautifulSoup
 import time
 import os
 import re
+import random
 
 # ==========================================
-# ⚙️ ส่วนตั้งค่า
+# ⚙️ ส่วนตั้งค่า (รายชื่อนิยาย)
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
-DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
 
-# ลิงก์หน้าสารบัญหลัก
-NOVEL_MAIN_URL = "https://kakuyomu.jp/works/822139839754922306"
-DB_FILE = "last_episode_discord.txt"
+# 🟢 เพิ่มนิยายของคุณตรงนี้ (ก๊อปปี้ปีกกา {...} เพิ่มต่อท้ายได้เลย)
+NOVEL_LIST = [
+    {
+        "name": "พื่อนสมัยเด็กสาวสวยอันดับหนึ่งของโรงเรียน", 
+        "url": "https://kakuyomu.jp/works/822139839754922306",
+        # ใส่ Webhook URL ของเรื่องนี้ (แนะนำให้ดึงจาก Secret หรือใส่ตรงนี้ถ้า Repo เป็น Private)
+        "webhook_url": os.getenv("WEBHOOK_NOVEL_1"), 
+        "db_file": "last_ep_novel_1.txt" # ไฟล์จำตอนล่าสุด (ห้ามซ้ำกับเรื่องอื่น)
+    },
+    {
+        "name": "เรื่องที่ผมไปช่วยพี่น้องสาวสวย",
+        "url": "https://kakuyomu.jp/works/16816700429097793676",
+        "webhook_url": os.getenv("WEBHOOK_NOVEL_2"), 
+        "db_file": "last_ep_novel_2.txt"
+    },
+]
 
 # ตั้งค่า Client
 if GEMINI_API_KEY:
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
     except Exception as e:
-        print(f"❌ Error initializing Gemini: {e}")
+        print(f"❌ Error initializing Client: {e}")
         client = None
 else:
     print("⚠️ ไม่พบ GEMINI_API_KEY")
     client = None
 
-# สร้างตัวยิงเว็บ (Cloudscraper)
-scraper = cloudscraper.create_scraper()
+scraper = cloudscraper.create_scraper(
+    browser={'browser': 'chrome', 'platform': 'windows', 'desktop': True}
+)
 
 # ==========================================
 # 🛠️ ฟังก์ชันทำงาน
 # ==========================================
 
 class Episode:
-    def __init__(self, title, link):
+    def __init__(self, title, link, ep_id):
         self.title = title
         self.link = link
+        self.ep_id = int(ep_id)
 
-def get_latest_episode_from_web():
-    """แกะหน้าเว็บสารบัญเพื่อหาตอนล่าสุด (ใช้วิธีหา Pattern Link)"""
-    print(f"กำลังเช็คหน้านิยายหลัก: {NOVEL_MAIN_URL}")
+def get_latest_episode_from_web(novel_url):
+    print(f"📖 เช็คสารบัญ: {novel_url}")
     try:
-        response = scraper.get(NOVEL_MAIN_URL)
-        
+        response = scraper.get(novel_url)
         if response.status_code != 200:
-            print(f"❌ เข้าเว็บไม่ได้ Status Code: {response.status_code}")
+            print(f"❌ เข้าเว็บไม่ได้ Status: {response.status_code}")
             return None
 
         soup = BeautifulSoup(response.text, 'html.parser')
-        
-        page_title = soup.title.text.strip() if soup.title else "No Title"
-        print(f"✅ เข้าถึงหน้าเว็บ: {page_title[:30]}...") 
-
-        # Pattern คือ /works/เลขไอดี/episodes/เลขไอดี
-        target_pattern = re.compile(r'/works/\d+/episodes/\d+')
-        
+        target_pattern = re.compile(r'/works/\d+/episodes/(\d+)')
         episode_links = soup.find_all('a', href=target_pattern)
         
         if episode_links:
-            # ดึงตัวสุดท้ายของลิสต์
+            # ดึงตัวสุดท้าย (ตอนล่าสุด)
             last_ep = episode_links[-1]
+            match = target_pattern.search(last_ep['href'])
+            ep_id = match.group(1) if match else 0
             
-            # ดึงชื่อตอน
             title = last_ep.text.strip()
             if not title:
                 span = last_ep.find('span')
-                if span: title = span.text.strip()
-                else: title = "ตอนล่าสุด (ไม่ทราบชื่อ)"
+                title = span.text.strip() if span else f"Episode {ep_id}"
             
-            # ดึงลิงก์
             href = last_ep['href']
-            if href.startswith('/'):
-                link = "https://kakuyomu.jp" + href
-            else:
-                link = href
+            link = "https://kakuyomu.jp" + href if href.startswith('/') else href
             
-            return Episode(title, link)
-        else:
-            print("❌ ไม่พบลิงก์ตอนนิยายเลย")
-            return None
-
-    except Exception as e:
-        print(f"❌ Error checking main page: {e}")
+            return Episode(title, link, ep_id)
+        
         return None
 
-def get_novel_content(url):
-    print(f"กำลังดึงเนื้อหาจาก: {url}")
-    try:
-        # ใช้ scraper ดึงเนื้อหา
-        response = scraper.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        body_elem = soup.select_one('.widget-episodeBody')
-        if body_elem:
-            return body_elem.get_text(separator="\n", strip=True)
-        
-        print("❌ ไม่พบเนื้อหา (Element .widget-episodeBody หายไป)")
-        return ""
     except Exception as e:
-        print(f"❌ Error fetching content: {e}")
+        print(f"❌ Error checking page: {e}")
         return None
 
-def translate_with_gemini(text):
+def get_content_with_retry(url, main_url, max_retries=3):
+    headers = {'Referer': main_url, 'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'}
+    
+    for attempt in range(max_retries):
+        try:
+            time.sleep(random.uniform(2, 5))
+            response = scraper.get(url, headers=headers, timeout=20)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                body = soup.select_one('.widget-episodeBody')
+                
+                if not body:
+                    main_content = soup.select_one('#contentMain-inner')
+                    if main_content:
+                        for invalid in main_content.select('button, .widget-episode-navigation'):
+                            invalid.decompose()
+                        body = main_content
+
+                if body:
+                    return body.get_text(separator="\n", strip=True)
+            
+            print(f"   ⚠️ ครั้งที่ {attempt+1} ไม่สำเร็จ (Status: {response.status_code})")
+        except Exception as e:
+            print(f"   ⚠️ Error: {e}")
+            
+    return None
+
+def translate(text):
     if not text or not client: return None
     
-    print("⏳ กำลังส่งให้ Gemini แปล...")
+    # Prompt แบบ Soften (แปลได้ทุกแนว)
     prompt = f"""
-    คุณคือนักแปลนิยายไลท์โนเวลมืออาชีพ แปลเนื้อหาต่อไปนี้จากภาษาญี่ปุ่นเป็นภาษาไทย
-    - ขอสำนวนวัยรุ่น อ่านง่าย สนุก เป็นธรรมชาติ
-    - ไม่ต้องแปลคำทับศัพท์ที่เกมเมอร์เข้าใจ
-    - จัดย่อหน้าให้อ่านง่าย
+    คุณคือนักแปลนิยายมืออาชีพ แปลนิยายญี่ปุ่นเรื่องนี้เป็นภาษาไทย
+    กติกา:
+    1. สำนวนวัยรุ่น อ่านสนุก เป็นธรรมชาติ
+    2. หากพบเนื้อหาล่อแหลม/รุนแรง ให้ "ปรับสำนวนให้ซอฟต์ลง" (ใช้คำเลี่ยง/คำเปรียบเปรย) 
+    3. ห้ามหยุดแปล ให้แปลจนจบตอน
     
-    เนื้อหาต้นฉบับ:
+    เนื้อหา:
     {text}
     """
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-pro', 
-            contents=prompt
+            model='gemini-2.5-pro',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                safety_settings=[
+                    types.SafetySetting(category='HARM_CATEGORY_HARASSMENT', threshold='BLOCK_NONE'),
+                    types.SafetySetting(category='HARM_CATEGORY_HATE_SPEECH', threshold='BLOCK_NONE'),
+                    types.SafetySetting(category='HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold='BLOCK_NONE'),
+                    types.SafetySetting(category='HARM_CATEGORY_DANGEROUS_CONTENT', threshold='BLOCK_NONE')
+                ]
+            )
         )
         return response.text
     except Exception as e:
-        print(f"❌ Translation Error: {e}")
+        print(f"   ❌ Gemini Error: {e}")
         return None
 
-def send_to_discord(title, link, content):
-    if not DISCORD_WEBHOOK_URL:
-        print("⚠️ ไม่มี Webhook URL (แสดงผลหน้าจอแทน)")
+def send_discord(webhook_url, title, link, content):
+    if not webhook_url: 
+        print("⚠️ ไม่มี Webhook URL")
         return
 
-    print("🚀 กำลังส่งเข้า Discord...")
-    header = {
-        "content": f"🚨 **ตอนใหม่มาแล้ว!** 🚨\n\n📖 **{title}**\n🔗 [อ่านต้นฉบับ]({link})\n\n🤖 กำลังแปล... รอสักครู่ครับ",
-        "username": "น้องบอทนักแปล"
-    }
-    requests.post(DISCORD_WEBHOOK_URL, json=header)
+    requests.post(webhook_url, json={
+        "content": f"🚨 **ตอนใหม่มาแล้ว!**\n📖 **{title}**\n🔗 [อ่านต้นฉบับ]({link})\n🤖 กำลังแปล..."
+    })
     
     chunk_size = 1900
     chunks = [content[i:i+chunk_size] for i in range(0, len(content), chunk_size)]
     
     for i, chunk in enumerate(chunks):
-        msg = chunk
-        if len(chunks) > 1:
-            msg = f"**[Part {i+1}/{len(chunks)}]**\n{chunk}"
-        requests.post(DISCORD_WEBHOOK_URL, json={"content": msg, "username": "น้องบอทนักแปล"})
+        msg = f"**[Part {i+1}/{len(chunks)}]**\n{chunk}" if len(chunks) > 1 else chunk
+        requests.post(webhook_url, json={"content": msg})
         time.sleep(1)
 
-    requests.post(DISCORD_WEBHOOK_URL, json={"content": "✅ **แปลจบตอนครับ!**", "username": "น้องบอทนักแปล"})
+    requests.post(webhook_url, json={"content": "✅ **แปลจบตอนครับ**"})
 
 # ==========================================
-# 🚀 Main Loop
+# 🚀 Main Loop (วนทำทีละเรื่อง)
 # ==========================================
 
-def main():
-    if not os.path.exists(DB_FILE):
-        with open(DB_FILE, "w") as f: f.write("")
+def process_novel(novel):
+    """ฟังก์ชันจัดการนิยาย 1 เรื่อง"""
+    print(f"\n--- 🔄 เริ่มตรวจสอบ: {novel['name']} ---")
+    
+    webhook = novel.get('webhook_url')
+    if not webhook:
+        print("❌ ข้าม: ไม่ได้ตั้งค่า Webhook URL")
+        return
 
-    with open(DB_FILE, "r") as f:
+    db_file = novel['db_file']
+    
+    # สร้างไฟล์ DB ถ้าไม่มี
+    if not os.path.exists(db_file):
+        with open(db_file, "w") as f: f.write("")
+
+    with open(db_file, "r") as f:
         last_link = f.read().strip()
 
-    latest = get_latest_episode_from_web()
+    # เช็คตอนล่าสุด
+    latest = get_latest_episode_from_web(novel['url'])
     
     if latest:
         print(f"🔍 ล่าสุดบนเว็บ: {latest.title}")
-        print(f"🔗 Link: {latest.link}")
         
         if latest.link != last_link:
-            print("✨ พบตอนใหม่! เริ่มดำเนินการ...")
-            raw_content = get_novel_content(latest.link)
+            print(f"✨ พบตอนใหม่! ({latest.title})")
             
-            if raw_content:
-                translated_text = translate_with_gemini(raw_content)
-                if translated_text:
-                    send_to_discord(latest.title, latest.link, translated_text)
+            content = get_content_with_retry(latest.link, novel['url'])
+            if content:
+                print("⏳ กำลังแปล...")
+                translated = translate(content)
+                if translated:
+                    print("🚀 ส่งเข้า Discord...")
+                    send_discord(webhook, latest.title, latest.link, translated)
                     
-                    with open(DB_FILE, "w") as f:
+                    # อัปเดตล่าสุด
+                    with open(db_file, "w") as f:
                         f.write(latest.link)
-                    print("💾 บันทึกสถานะเรียบร้อย")
+                    print("💾 บันทึกสถานะแล้ว")
+                else:
+                    print("❌ แปลไม่สำเร็จ")
+            else:
+                print("❌ ดึงเนื้อหาไม่สำเร็จ")
         else:
             print("😴 ยังไม่มีตอนใหม่")
     else:
-        print("❌ ไม่สามารถดึงข้อมูลตอนล่าสุดได้")
+        print("❌ หาตอนล่าสุดไม่เจอ")
+
+def main():
+    print("🤖 บอทเริ่มทำงาน (รองรับหลายเรื่อง)...")
+    
+    for novel in NOVEL_LIST:
+        process_novel(novel)
+        print("-" * 30)
 
 if __name__ == "__main__":
     main()
