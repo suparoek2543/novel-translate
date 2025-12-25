@@ -1,4 +1,4 @@
-# Welcome to GitHub Desktop!
+# แปล novel ได้เองจากต้นฉบับ และสร้าง WebSite ไว้อ่านได้เลย
 
 This is your README. READMEs are where you can communicate what your project is and how to use it.
 
