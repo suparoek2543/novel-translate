@@ -12,7 +12,7 @@ import re
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-NOVEL_MAIN_URL = "https://kakuyomu.jp/works/822139839754922306"
+NOVEL_MAIN_URL = "https://kakuyomu.jp/works/16816700429097793676"
 DB_FILE = "last_episode_discord.txt" 
 
 # ตั้งค่า Client
