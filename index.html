@@ -69,7 +69,7 @@
             margin: 0 auto; 
             line-height: 1.8; 
             font-size: 18px; 
-            position: relative;
+            position: relative; /* สำคัญ: เพื่อให้ปุ่มเมนูอิงตำแหน่งกับกล่องนี้ */
         }
         h1 { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
         .content-body { white-space: pre-wrap; margin-bottom: 50px; }
@@ -83,7 +83,13 @@
         /* --- Mobile Specific UI --- */
         .menu-btn { 
             display: none; /* ซ่อนใน PC */
-            position: fixed; top: 15px; left: 15px; z-index: 900;
+            
+            /* ✅ แก้ไขตรงนี้: เปลี่ยนจาก fixed เป็น absolute */
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            z-index: 900;
+            
             background: var(--accent-color); color: white; 
             border-radius: 50%; width: 45px; height: 45px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -99,27 +105,26 @@
 
         /* 📱 Mobile Styles */
         @media (max-width: 768px) {
-            body { flex-direction: row; } /* กลับมาเป็น row เพื่อให้ sidebar ซ้อนทับได้ */
+            body { flex-direction: row; } 
             
             #sidebar {
-                position: fixed; top: 0; left: -100%; /* ซ่อนไปทางซ้าย */
+                position: fixed; top: 0; left: -100%; /* ซ่อนซ้าย */
                 width: 85%; height: 100%; 
                 box-shadow: 2px 0 10px rgba(0,0,0,0.2);
             }
-            #sidebar.active { transform: translateX(100%); left: -85%; } /* เลื่อนออกมา */
             /* แก้ไข Logic Sidebar Slide: */
             #sidebar { left: -320px; width: 320px; }
             #sidebar.show { transform: translateX(320px); }
 
             #main { 
                 width: 100%; 
-                padding: 70px 20px 20px 20px; /* เว้นที่ด้านบนให้ปุ่มเมนู */
+                /* เว้นที่ด้านบนให้ปุ่มเมนูนิดหน่อย */
+                padding: 80px 20px 20px 20px; 
             }
             
-            .menu-btn { display: block; } /* โชว์ปุ่มเมนู */
-            .close-sidebar-btn { display: block; } /* โชว์ปุ่มปิด */
+            .menu-btn { display: block; } /* โชว์ปุ่ม */
+            .close-sidebar-btn { display: block; } /* โชว์ปุ่มปิดในเมนู */
             
-            /* ปรับตัวหนังสือให้อ่านง่ายในมือถือ */
             #main { font-size: 16px; line-height: 1.6; }
         }
     </style>
@@ -128,8 +133,6 @@
 <body>
 
     <div id="overlay" onclick="toggleSidebar()"></div>
-
-    <div class="menu-btn" onclick="toggleSidebar()">☰</div>
 
     <div id="sidebar">
         <div class="sidebar-header">
@@ -145,6 +148,8 @@
     </div>
 
     <div id="main">
+        <div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
         <div id="reader-content">
             <h1 style="border:none">ยินดีต้อนรับ</h1>
             <p>กดปุ่ม ☰ มุมซ้ายบนเพื่อเลือกนิยาย</p>
@@ -161,30 +166,20 @@
         let currentChapterIndex = -1;
         let currentChapterList = [];
 
-        // ฟังก์ชันเปิด/ปิด Sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             sidebar.classList.toggle('show');
-            
-            if (sidebar.classList.contains('show')) {
-                overlay.style.display = 'block';
-            } else {
-                overlay.style.display = 'none';
-            }
+            overlay.style.display = sidebar.classList.contains('show') ? 'block' : 'none';
         }
 
-        // โหลดข้อมูล
         fetch('novels.json')
             .then(response => response.json())
             .then(data => {
-                if (Array.isArray(data)) {
-                    alert("⚠️ โครงสร้าง JSON เก่า กรุณารันบอทใหม่"); return;
-                }
+                if (Array.isArray(data)) { alert("⚠️ โครงสร้าง JSON เก่า"); return; }
                 novelData = data;
                 renderSidebar();
                 
-                // โหลดตอนเก่า
                 const lastNovel = localStorage.getItem('lastNovelId');
                 const lastEp = localStorage.getItem('lastEpId');
                 
@@ -194,7 +189,7 @@
                     
                     const chapters = novelData[lastNovel].chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
                     const idx = chapters.findIndex(c => c.ep_id == lastEp);
-                    if (idx !== -1) loadChapter(lastNovel, idx, false); // false = ไม่ต้อง auto close ตอนโหลดครั้งแรก
+                    if (idx !== -1) loadChapter(lastNovel, idx, false);
                 }
             })
             .catch(err => {
@@ -224,7 +219,7 @@
                     const item = document.createElement('div');
                     item.className = 'chapter-item';
                     item.innerText = ep.title;
-                    item.onclick = () => loadChapter(novelId, index, true); // true = กดเอง ให้ปิดเมนู
+                    item.onclick = () => loadChapter(novelId, index, true);
                     item.id = `ep-${ep.ep_id}`;
                     div.appendChild(item);
                 });
@@ -250,19 +245,16 @@
             `;
             document.getElementById('nav-btns').style.display = 'flex';
             
-            // Highlight Active
             document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
             const activeItem = document.getElementById(`ep-${ep.ep_id}`);
             if(activeItem) activeItem.classList.add('active');
 
-            // Scroll Top
             document.getElementById('main').scrollTop = 0;
-            window.scrollTo(0, 0); // เผื่อ Mobile browser
+            window.scrollTo(0, 0); 
             
             localStorage.setItem('lastNovelId', novelId);
             localStorage.setItem('lastEpId', ep.ep_id);
 
-            // ✅ ถ้าดูบนมือถือ ให้ปิดเมนูอัตโนมัติเมื่อเลือกตอน
             if (autoCloseMenu && window.innerWidth <= 768) {
                 toggleSidebar();
             }
@@ -270,7 +262,7 @@
 
         function nextChapter() {
             if (currentChapterIndex < currentChapterList.length - 1) {
-                loadChapter(currentNovelId, currentChapterIndex + 1, false); // กดถัดไปไม่ต้องปิดเมนูเพราะมันปิดอยู่แล้ว
+                loadChapter(currentNovelId, currentChapterIndex + 1, false);
             }
         }
 
@@ -282,8 +274,7 @@
 
         function toggleTheme() {
             const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            body.setAttribute('data-theme', body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         }
     </script>
 </body>
