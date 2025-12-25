@@ -52,9 +52,22 @@ def translate_title(text):
     """แปลชื่อตอน/ชื่อเรื่อง (สั้นๆ)"""
     if not client or not text: return text
     try:
+        # ✅ ปรับ Prompt ใหม่: สั่งให้หยุดคุยเล่น แล้วแปลอย่างเดียว
+        prompt = f"""
+        You are a professional translator. 
+        Translate the following Japanese novel chapter title into Thai.
+        
+        Strict Rules:
+        1. Output ONLY the translated title.
+        2. Do not include any conversational text, explanations, or notes.
+        3. Do not give options (e.g., Option A, Option B). Just give the best one.
+        
+        Japanese Title: {text}
+        """
+        
         res = client.models.generate_content(
             model='gemini-2.5-pro',
-            contents=f"แปลชื่อนี้เป็นภาษาไทย (สั้นๆ กระชับ): {text}",
+            contents=prompt,
             config=types.GenerateContentConfig(safety_settings=[
                 types.SafetySetting(category='HARM_CATEGORY_HARASSMENT', threshold='BLOCK_NONE'),
                 types.SafetySetting(category='HARM_CATEGORY_HATE_SPEECH', threshold='BLOCK_NONE'),
@@ -62,7 +75,12 @@ def translate_title(text):
                 types.SafetySetting(category='HARM_CATEGORY_DANGEROUS_CONTENT', threshold='BLOCK_NONE')
             ])
         )
-        return res.text.strip() if res.text else text
+        
+        # กรองคำตอบอีกชั้น เผื่อมันยังดื้อ
+        result = res.text.strip() if res.text else text
+        # ลบเครื่องหมายคำพูดออก (ถ้ามี)
+        return result.replace('"', '').replace("'", "")
+        
     except: return text
 
 def translate_smart(text, retry_count=0):
