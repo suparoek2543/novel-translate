@@ -126,7 +126,7 @@ def translate(text):
     try:
         # ✅ แก้ชื่อ Model เป็นตัวที่มีอยู่จริง (1.5-flash หรือ 1.5-pro)
         response = client.models.generate_content(
-            model='gemini-1.5-flash', 
+            model='gemini-2.5-pro', 
             contents=prompt,
             config=types.GenerateContentConfig(
                 safety_settings=[
