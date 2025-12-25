@@ -11,6 +11,7 @@
             --sidebar-bg: #fff;
             --accent-color: #6c5ce7;
             --hover-color: #f0f0f0;
+            --border-color: #ccc;
         }
         [data-theme="dark"] {
             --bg-color: #1e1e1e;
@@ -18,179 +19,264 @@
             --sidebar-bg: #2d2d2d;
             --accent-color: #a29bfe;
             --hover-color: #3d3d3d;
+            --border-color: #444;
         }
         body { margin: 0; font-family: 'Sarabun', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
         
-        /* Sidebar */
-        #sidebar { width: 320px; background: var(--sidebar-bg); border-right: 1px solid #ccc; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; font-weight: bold; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        #novel-list { flex: 1; overflow-y: auto; padding: 10px; margin: 0; }
+        /* --- Sidebar (สารบัญ) --- */
+        #sidebar { 
+            width: 320px; 
+            background: var(--sidebar-bg); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; 
+            flex-direction: column; 
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .sidebar-header { 
+            padding: 15px; 
+            font-weight: bold; 
+            border-bottom: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        #novel-list { flex: 1; overflow-y: auto; padding: 10px; }
         
-        /* Novel Group (Accordion) */
-        details { margin-bottom: 10px; border-radius: 5px; overflow: hidden; border: 1px solid transparent; }
-        details[open] { border-color: #ddd; background: var(--bg-color); }
+        /* Accordion Style */
+        details { margin-bottom: 5px; }
         summary { 
-            cursor: pointer; padding: 10px; font-weight: bold; list-style: none; 
-            display: flex; align-items: center; transition: 0.2s;
+            cursor: pointer; padding: 12px; font-weight: bold; list-style: none; 
+            border-radius: 5px; transition: 0.2s; display: flex; align-items: center;
         }
         summary:hover { background: var(--hover-color); }
-        summary::before { content: '📁'; margin-right: 8px; }
+        summary::before { content: '📁'; margin-right: 10px; }
         details[open] summary::before { content: '📂'; }
         
-        /* Chapter Item */
         .chapter-item { 
-            padding: 8px 10px 8px 35px; cursor: pointer; font-size: 14px; 
-            border-bottom: 1px solid rgba(0,0,0,0.05); transition: 0.2s;
-            display: flex; align-items: center;
+            padding: 10px 10px 10px 35px; cursor: pointer; font-size: 14px; 
+            border-bottom: 1px solid rgba(0,0,0,0.05); 
         }
-        .chapter-item::before { content: '📄'; margin-right: 8px; font-size: 12px; opacity: 0.7; }
         .chapter-item:hover { background: var(--hover-color); color: var(--accent-color); }
         .chapter-item.active { background: var(--accent-color); color: white; }
         
-        /* Main Content */
-        #main { flex: 1; padding: 40px; overflow-y: auto; max-width: 900px; margin: 0 auto; line-height: 1.8; font-size: 18px; }
+        /* --- Main Content (หน้าอ่าน) --- */
+        #main { 
+            flex: 1; 
+            padding: 40px; 
+            overflow-y: auto; 
+            max-width: 900px; 
+            margin: 0 auto; 
+            line-height: 1.8; 
+            font-size: 18px; 
+            position: relative;
+        }
         h1 { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
         .content-body { white-space: pre-wrap; margin-bottom: 50px; }
-        .nav-btns { display: flex; justify-content: space-between; margin-top: 30px; }
+        
+        /* ปุ่มต่างๆ */
+        .nav-btns { display: flex; justify-content: space-between; margin-top: 30px; padding-bottom: 50px; }
         button { padding: 10px 20px; border: none; background: var(--accent-color); color: white; cursor: pointer; border-radius: 5px; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        .theme-toggle { cursor: pointer; background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+        .theme-toggle { background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 10px; border-radius: 15px; font-size: 12px; }
 
+        /* --- Mobile Specific UI --- */
+        .menu-btn { 
+            display: none; /* ซ่อนใน PC */
+            position: fixed; top: 15px; left: 15px; z-index: 900;
+            background: var(--accent-color); color: white; 
+            border-radius: 50%; width: 45px; height: 45px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 20px; text-align: center; line-height: 45px; cursor: pointer;
+        }
+        .close-sidebar-btn { display: none; background: none; border: none; font-size: 24px; color: var(--text-color); cursor: pointer; }
+        
+        /* Overlay (ฉากหลังมืดเวลาเปิดเมนูมือถือ) */
+        #overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 999;
+        }
+
+        /* 📱 Mobile Styles */
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar { width: 100%; height: 40%; }
-            #main { height: 60%; padding: 20px; }
+            body { flex-direction: row; } /* กลับมาเป็น row เพื่อให้ sidebar ซ้อนทับได้ */
+            
+            #sidebar {
+                position: fixed; top: 0; left: -100%; /* ซ่อนไปทางซ้าย */
+                width: 85%; height: 100%; 
+                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            }
+            #sidebar.active { transform: translateX(100%); left: -85%; } /* เลื่อนออกมา */
+            /* แก้ไข Logic Sidebar Slide: */
+            #sidebar { left: -320px; width: 320px; }
+            #sidebar.show { transform: translateX(320px); }
+
+            #main { 
+                width: 100%; 
+                padding: 70px 20px 20px 20px; /* เว้นที่ด้านบนให้ปุ่มเมนู */
+            }
+            
+            .menu-btn { display: block; } /* โชว์ปุ่มเมนู */
+            .close-sidebar-btn { display: block; } /* โชว์ปุ่มปิด */
+            
+            /* ปรับตัวหนังสือให้อ่านง่ายในมือถือ */
+            #main { font-size: 16px; line-height: 1.6; }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <div id="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="menu-btn" onclick="toggleSidebar()">☰</div>
+
     <div id="sidebar">
         <div class="sidebar-header">
-            📚 คลังนิยาย
-            <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+            <span>📚 คลังนิยาย</span>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                <button class="close-sidebar-btn" onclick="toggleSidebar()">✕</button>
+            </div>
         </div>
         <div id="novel-list">
-            </div>
+            <div style="padding:20px; text-align:center; color:gray;">กำลังโหลด...</div>
+        </div>
     </div>
 
     <div id="main">
         <div id="reader-content">
             <h1 style="border:none">ยินดีต้อนรับ</h1>
-            <p>เลือกนิยายจากเมนูโฟลเดอร์ด้านซ้ายเพื่อเริ่มอ่าน...</p>
+            <p>กดปุ่ม ☰ มุมซ้ายบนเพื่อเลือกนิยาย</p>
         </div>
         <div class="nav-btns" id="nav-btns" style="display:none">
-            <button onclick="prevChapter()">PREV</button>
-            <button onclick="nextChapter()">NEXT</button>
+            <button onclick="prevChapter()">❮ ตอนก่อนหน้า</button>
+            <button onclick="nextChapter()">ตอนถัดไป ❯</button>
         </div>
     </div>
 
     <script>
-        let novelData = {}; // เก็บข้อมูลทั้งหมด
+        let novelData = {};
         let currentNovelId = null;
         let currentChapterIndex = -1;
         let currentChapterList = [];
+
+        // ฟังก์ชันเปิด/ปิด Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            sidebar.classList.toggle('show');
+            
+            if (sidebar.classList.contains('show')) {
+                overlay.style.display = 'block';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
 
         // โหลดข้อมูล
         fetch('novels.json')
             .then(response => response.json())
             .then(data => {
+                if (Array.isArray(data)) {
+                    alert("⚠️ โครงสร้าง JSON เก่า กรุณารันบอทใหม่"); return;
+                }
                 novelData = data;
                 renderSidebar();
                 
-                // โหลดตอนล่าสุดที่อ่านค้างไว้
+                // โหลดตอนเก่า
                 const lastNovel = localStorage.getItem('lastNovelId');
                 const lastEp = localStorage.getItem('lastEpId');
                 
                 if (lastNovel && novelData[lastNovel]) {
-                    // เปิด Accordion ของเรื่องนั้น
                     const details = document.getElementById(`details-${btoa(lastNovel)}`);
                     if (details) details.open = true;
                     
-                    // หา index ของตอน
                     const chapters = novelData[lastNovel].chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
                     const idx = chapters.findIndex(c => c.ep_id == lastEp);
-                    if (idx !== -1) loadChapter(lastNovel, idx);
+                    if (idx !== -1) loadChapter(lastNovel, idx, false); // false = ไม่ต้อง auto close ตอนโหลดครั้งแรก
                 }
             })
-            .catch(err => console.error("โหลดข้อมูลไม่ได้", err));
+            .catch(err => {
+                console.error(err);
+                document.getElementById('novel-list').innerHTML = `<p style="color:red; text-align:center">โหลดข้อมูลไม่สำเร็จ</p>`;
+            });
 
         function renderSidebar() {
             const list = document.getElementById('novel-list');
             list.innerHTML = '';
+            
+            const keys = Object.keys(novelData);
+            if (keys.length === 0) { list.innerHTML = '<p style="text-align:center">ไม่พบนิยาย</p>'; return; }
 
-            // วนลูปสร้าง Folder สำหรับแต่ละเรื่อง
-            Object.keys(novelData).forEach(novelId => {
+            keys.forEach(novelId => {
                 const novel = novelData[novelId];
-                
                 const details = document.createElement('details');
-                details.id = `details-${btoa(novelId)}`; // สร้าง ID ปลอดภัย
+                details.id = `details-${btoa(novelId)}`;
                 
                 const summary = document.createElement('summary');
                 summary.innerText = novel.title;
                 
-                const ul = document.createElement('div');
-                
-                // เรียงตอน
+                const div = document.createElement('div');
                 const sortedChapters = novel.chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
                 
                 sortedChapters.forEach((ep, index) => {
                     const item = document.createElement('div');
                     item.className = 'chapter-item';
-                    item.innerText = ep.title; // แสดงชื่อตอน
-                    item.onclick = () => loadChapter(novelId, index);
+                    item.innerText = ep.title;
+                    item.onclick = () => loadChapter(novelId, index, true); // true = กดเอง ให้ปิดเมนู
                     item.id = `ep-${ep.ep_id}`;
-                    ul.appendChild(item);
+                    div.appendChild(item);
                 });
 
                 details.appendChild(summary);
-                details.appendChild(ul);
+                details.appendChild(div);
                 list.appendChild(details);
             });
         }
 
-        function loadChapter(novelId, index) {
+        function loadChapter(novelId, index, autoCloseMenu = true) {
             currentNovelId = novelId;
             currentChapterList = novelData[novelId].chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
             currentChapterIndex = index;
-            
             const ep = currentChapterList[index];
             
-            // Render เนื้อหา
-            const contentDiv = document.getElementById('reader-content');
-            contentDiv.innerHTML = `
+            document.getElementById('reader-content').innerHTML = `
                 <div style="font-size:14px; color:gray; margin-bottom:10px;">📖 ${novelData[novelId].title}</div>
                 <h1>${ep.title}</h1>
                 <div class="content-body">${ep.content}</div>
                 <hr>
-                <div style="font-size: 14px; color: gray;">ต้นฉบับ: <a href="${ep.link}" target="_blank">Link</a></div>
+                <div style="font-size: 14px; color: gray;">Original: <a href="${ep.link}" target="_blank">Link</a></div>
             `;
-
             document.getElementById('nav-btns').style.display = 'flex';
             
-            // Highlight
+            // Highlight Active
             document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
             const activeItem = document.getElementById(`ep-${ep.ep_id}`);
             if(activeItem) activeItem.classList.add('active');
 
             // Scroll Top
             document.getElementById('main').scrollTop = 0;
+            window.scrollTo(0, 0); // เผื่อ Mobile browser
             
-            // Save state
             localStorage.setItem('lastNovelId', novelId);
             localStorage.setItem('lastEpId', ep.ep_id);
+
+            // ✅ ถ้าดูบนมือถือ ให้ปิดเมนูอัตโนมัติเมื่อเลือกตอน
+            if (autoCloseMenu && window.innerWidth <= 768) {
+                toggleSidebar();
+            }
         }
 
         function nextChapter() {
             if (currentChapterIndex < currentChapterList.length - 1) {
-                loadChapter(currentNovelId, currentChapterIndex + 1);
+                loadChapter(currentNovelId, currentChapterIndex + 1, false); // กดถัดไปไม่ต้องปิดเมนูเพราะมันปิดอยู่แล้ว
             }
         }
 
         function prevChapter() {
             if (currentChapterIndex > 0) {
-                loadChapter(currentNovelId, currentChapterIndex - 1);
+                loadChapter(currentNovelId, currentChapterIndex - 1, false);
             }
         }
 
