@@ -38,11 +38,13 @@ jobs:
           git config --global user.name "Auto Bot"
           git config --global user.email "bot@noreply.github.com"
           
-          # ✅ สำคัญ: ดึงข้อมูลล่าสุดก่อนดันขึ้น (กันชนกับไฟล์ที่อัปเดตจากเครื่องมืออื่น)
+          # 1. เก็บงานที่บอททำเสร็จแล้วเข้ากล่องก่อน (Commit)
+          git add *.txt novels.json
+          git commit -m "Update novels (Web & DB)" || echo "No changes to commit"
+          
+          # 2. ดึงความเปลี่ยนแปลงล่าสุดจาก GitHub มารวม (Rebase)
+          # ขั้นตอนนี้จะปลอดภัยแล้ว เพราะเรา Commit งานของเราไว้แล้ว
           git pull origin main --rebase
           
-          # ✅ Add ไฟล์ json และ txt ทั้งหมด
-          git add *.txt novels.json
-          
-          git commit -m "Update novels (Web & DB)" || echo "No changes to commit"
+          # 3. ส่งกลับขึ้น GitHub (Push)
           git push
