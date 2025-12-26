@@ -35,7 +35,7 @@ NOVEL_LIST = [
         "url": "https://kakuyomu.jp/works/1177354054897649731",
         "webhook_url": os.getenv("WEBHOOK_NOVEL_3"), 
         "db_file": "last_ep_novel_3.txt"
-    },
+    }
 ]
 
 if GEMINI_API_KEY:
