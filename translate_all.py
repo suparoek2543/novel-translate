@@ -14,10 +14,10 @@ from urllib.parse import urljoin
 # ⚙️ ส่วนตั้งค่า
 # ==========================================
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
-NOVEL_MAIN_URL = "https://kakuyomu.jp/works/1177354054897649731"
+NOVEL_MAIN_URL = "https://kakuyomu.jp/works/16818792439429817952"
 
 JSON_DB_FILE = "novels.json"
-HISTORY_FILE = "history_novel_2.txt"
+HISTORY_FILE = "history_novel_4.txt"
 
 if GEMINI_API_KEY:
     try:
