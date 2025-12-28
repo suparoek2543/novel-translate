@@ -111,27 +111,6 @@ def translate_smart(text, retry_count=0):
         time.sleep(2)
         return translate_smart(text, retry_count + 1)
 
-    # --- ⚔️ กลยุทธ์ 4 (ไม้ตาย): หั่นครึ่งแล้วแปล (Split Mode) ---
-    if retry_count == 3:
-        print("   ⚔️ ไม้ตายสุดท้าย: หั่นครึ่งแล้วแปล (Split Mode)...")
-        try:
-            mid = len(text) // 2
-            part1 = text[:mid]
-            part2 = text[mid:]
-            
-            # เรียกตัวเองซ้ำด้วยโหมด Soften (1)
-            res1, _ = translate_smart(part1, retry_count=1)
-            res2, _ = translate_smart(part2, retry_count=1)
-            
-            # ถ้ารอดทั้งคู่ หรือรอดบ้าง ก็เอามารวมกัน
-            full_text = ""
-            full_text += (res1 if res1 else "⚠️ [ส่วนแรกแปลไม่ผ่าน]") + "\n\n--- (ต่อ) ---\n\n"
-            full_text += (res2 if res2 else "⚠️ [ส่วนหลังแปลไม่ผ่าน]")
-            
-            return full_text, None
-        except Exception as e:
-            print(f"   ❌ Split Mode Failed: {e}")
-
     # ถ้าหลุดมาถึงตรงนี้คือไม่ไหวแล้ว
     fallback = "⚠️ เนื้อหาตอนนี้แรงเกินไป ระบบไม่สามารถแปลได้ (กรุณาอ่านต้นฉบับ)"
     return fallback, None
