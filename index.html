@@ -23,11 +23,6 @@
         }
         body { margin: 0; font-family: 'Sarabun', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
         
-        <div style="padding: 15px; border-bottom: 1px solid var(--border-color);">
-            <input type="text" id="novel-url" placeholder="วางลิงก์ Kakuyomu ที่นี่..." 
-               style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color);">
-            <button onclick="addNewNovel()" style="width: 100%; margin-top: 10px;">➕ เพิ่มนิยาย/แปลใหม่</button>
-        </div>
         /* --- Sidebar (สารบัญ) --- */
         #sidebar { 
             width: 320px; 
@@ -138,7 +133,43 @@
 <body>
 
     <div id="overlay" onclick="toggleSidebar()"></div>
+    <div style="padding: 15px; border-bottom: 2px solid var(--accent-color); background: var(--hover-color);">
+        <label style="font-size: 12px; font-weight: bold;">➕ เพิ่มนิยายใหม่ / อัปเดตตอน</label>
+        <input type="text" id="novel-input" placeholder="วางลิงก์ Kakuyomu..." 
+            style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid var(--border-color); box-sizing: border-box;">
+        <button onclick="startTranslation()" style="width: 100%; margin-top: 10px; padding: 10px; font-weight: bold;">
+            🚀 เริ่มการแปลทันที
+        </button>
+    </div>
 
+    <script>
+    function startTranslation() {
+        const url = document.getElementById('novel-input').value;
+        if (!url) return alert("กรุณาวางลิงก์ก่อนครับ");
+
+        fetch('http://localhost:5000/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: url })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message);
+            document.getElementById('novel-input').value = '';
+        })
+        .catch(err => alert("กรุณารันไฟล์ server.py ก่อนใช้งาน: " + err));
+    }
+
+    // แก้ไขฟังก์ชันโหลดข้อมูลเดิมให้ Refresh ทุก 30 วินาที เพื่อดูตอนใหม่
+    setInterval(() => {
+        fetch('novels.json?t=' + Date.now()) // ป้องกัน Cache
+            .then(res => res.json())
+            .then(data => {
+                novelData = data;
+                renderSidebar(); 
+            });
+    }, 30000);
+    </script>
     <div id="sidebar">
         <div class="sidebar-header">
             <span>📚 คลังนิยาย</span>

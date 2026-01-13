@@ -2,19 +2,22 @@ name: Auto Translate Novel
 
 on:
   schedule:
-    - cron: '0 12 * * *' # รันทุกๆ 3 ชั่วโมง (ปรับเวลาตรงเลข 3 ได้)
-  workflow_dispatch: # ปุ่มกดรันเองด้วยมือ
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    inputs:
+      novel_url:
+        description: 'วางลิงก์นิยายที่ต้องการแปลใหม่ทั้งหมด'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
 jobs:
-  run-translation-bot:
+  build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,28 +26,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install google-genai feedparser requests beautifulsoup4 cloudscraper
+          pip install google-genai requests beautifulsoup4 cloudscraper
 
-      - name: Run Script
+      - name: Run logic
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           WEBHOOK_NOVEL_1: ${{ secrets.WEBHOOK_NOVEL_1 }}
-          WEBHOOK_NOVEL_2: ${{ secrets.WEBHOOK_NOVEL_2 }}
+          TARGET_URL: ${{ github.event.inputs.novel_url }}
         run: python check_novel.py
 
-      - name: Commit and Push DB
+      - name: Save changes
         run: |
-          git config --global user.name "Auto Bot"
-          git config --global user.email "bot@noreply.github.com"
-          
-          # 1. เก็บงานที่บอททำเสร็จแล้วเข้ากล่องก่อน (Commit)
-          git add *.txt novels.json
-          git commit -m "Update novels (Web & DB)" || echo "No changes to commit"
-          
-          # 2. ดึงความเปลี่ยนแปลงล่าสุดจาก GitHub มารวม (Rebase)
-          # ขั้นตอนนี้จะปลอดภัยแล้ว เพราะเรา Commit งานของเราไว้แล้ว
+          git config --global user.name "Bot"
+          git config --global user.email "bot@github.com"
+          # เพิ่ม novel_list.txt เข้าไปใน git add ด้วย
+          git add novels.json history_all.txt novel_list.txt 
+          git commit -m "Update translations and novel list [skip ci]" || exit 0
           git pull origin main --rebase
-          
-          # 3. ส่งกลับขึ้น GitHub (Push)
           git push
