@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
             --hover-color: #f0f0f0;
             --border-color: #ccc;
         }
+
         [data-theme="dark"] {
             --bg-color: #1e1e1e;
             --text-color: #e0e0e0;
@@ -21,156 +23,259 @@
             --hover-color: #3d3d3d;
             --border-color: #444;
         }
-        body { margin: 0; font-family: 'Sarabun', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
-        
+
+        body {
+            margin: 0;
+            font-family: 'Sarabun', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
         /* --- Sidebar (สารบัญ) --- */
-        #sidebar { 
-            width: 320px; 
-            background: var(--sidebar-bg); 
-            border-right: 1px solid var(--border-color); 
-            display: flex; 
-            flex-direction: column; 
+        #sidebar {
+            width: 320px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
             transition: transform 0.3s ease;
             z-index: 1000;
         }
-        .sidebar-header { 
-            padding: 15px; 
-            font-weight: bold; 
-            border-bottom: 1px solid var(--border-color); 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
+
+        .sidebar-header {
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        #novel-list { flex: 1; overflow-y: auto; padding: 10px; }
-        
+
+        #novel-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
         /* Accordion Style */
-        details { margin-bottom: 5px; }
-        summary { 
-            cursor: pointer; padding: 12px; font-weight: bold; list-style: none; 
-            border-radius: 5px; transition: 0.2s; display: flex; align-items: center;
+        details {
+            margin-bottom: 5px;
         }
-        summary:hover { background: var(--hover-color); }
-        summary::before { content: '📁'; margin-right: 10px; }
-        details[open] summary::before { content: '📂'; }
-        
-        .chapter-item { 
-            padding: 10px 10px 10px 35px; cursor: pointer; font-size: 14px; 
-            border-bottom: 1px solid rgba(0,0,0,0.05); 
+
+        summary {
+            cursor: pointer;
+            padding: 12px;
+            font-weight: bold;
+            list-style: none;
+            border-radius: 5px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
         }
-        .chapter-item:hover { background: var(--hover-color); color: var(--accent-color); }
-        .chapter-item.active { background: var(--accent-color); color: white; }
-        
+
+        summary:hover {
+            background: var(--hover-color);
+        }
+
+        summary::before {
+            content: '📁';
+            margin-right: 10px;
+        }
+
+        details[open] summary::before {
+            content: '📂';
+        }
+
+        .chapter-item {
+            padding: 10px 10px 10px 35px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .chapter-item:hover {
+            background: var(--hover-color);
+            color: var(--accent-color);
+        }
+
+        .chapter-item.active {
+            background: var(--accent-color);
+            color: white;
+        }
+
         /* --- Main Content (หน้าอ่าน) --- */
-        #main { 
-            flex: 1; 
-            padding: 40px; 
-            overflow-y: auto; 
-            max-width: 900px; 
-            margin: 0 auto; 
-            line-height: 1.8; 
-            font-size: 18px; 
-            position: relative; /* สำคัญ: เพื่อให้ปุ่มเมนูอิงตำแหน่งกับกล่องนี้ */
+        #main {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            max-width: 900px;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 18px;
+            position: relative;
+            /* สำคัญ: เพื่อให้ปุ่มเมนูอิงตำแหน่งกับกล่องนี้ */
         }
-        h1 { color: var(--accent-color); border-bottom: 2px solid var(--accent-color); padding-bottom: 10px; }
-        .content-body { white-space: pre-wrap; margin-bottom: 50px; }
-        
+
+        h1 {
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .content-body {
+            white-space: pre-wrap;
+            margin-bottom: 50px;
+        }
+
         /* ปุ่มต่างๆ */
-        .nav-btns { display: flex; justify-content: space-between; margin-top: 30px; padding-bottom: 50px; }
-        button { padding: 10px 20px; border: none; background: var(--accent-color); color: white; cursor: pointer; border-radius: 5px; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .theme-toggle { background: none; border: 1px solid var(--text-color); color: var(--text-color); padding: 5px 10px; border-radius: 15px; font-size: 12px; }
+        .nav-btns {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--text-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
 
         /* --- Mobile Specific UI --- */
-        .menu-btn { 
-            display: none; /* ซ่อนใน PC */
-            
+        .menu-btn {
+            display: none;
+            /* ซ่อนใน PC */
+
             /* ✅ แก้ไขตรงนี้: เปลี่ยนจาก fixed เป็น absolute */
-            position: absolute; 
-            top: 20px; 
-            left: 20px; 
+            position: absolute;
+            top: 20px;
+            left: 20px;
             z-index: 900;
-            
-            background: var(--accent-color); color: white; 
-            border-radius: 50%; width: 45px; height: 45px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            font-size: 20px; text-align: center; line-height: 45px; cursor: pointer;
+
+            background: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            font-size: 20px;
+            text-align: center;
+            line-height: 45px;
+            cursor: pointer;
         }
-        .close-sidebar-btn { display: none; background: none; border: none; font-size: 24px; color: var(--text-color); cursor: pointer; }
-        
+
+        .close-sidebar-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
         /* Overlay (ฉากหลังมืดเวลาเปิดเมนูมือถือ) */
         #overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 999;
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
         }
 
         /* 📱 Mobile Styles */
         @media (max-width: 768px) {
-            body { flex-direction: row; } 
-            
-            #sidebar {
-                position: fixed; top: 0; left: -100%; /* ซ่อนซ้าย */
-                width: 85%; height: 100%; 
-                box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+            body {
+                flex-direction: row;
             }
-            /* แก้ไข Logic Sidebar Slide: */
-            #sidebar { left: -320px; width: 320px; }
-            #sidebar.show { transform: translateX(320px); }
 
-            #main { 
-                width: 100%; 
-                /* เว้นที่ด้านบนให้ปุ่มเมนูนิดหน่อย */
-                padding: 80px 20px 20px 20px; 
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: -100%;
+                /* ซ่อนซ้าย */
+                width: 85%;
+                height: 100%;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             }
-            
-            .menu-btn { display: block; } /* โชว์ปุ่ม */
-            .close-sidebar-btn { display: block; } /* โชว์ปุ่มปิดในเมนู */
-            
-            #main { font-size: 16px; line-height: 1.6; }
+
+            /* แก้ไข Logic Sidebar Slide: */
+            #sidebar {
+                left: -320px;
+                width: 320px;
+            }
+
+            #sidebar.show {
+                transform: translateX(320px);
+            }
+
+            #main {
+                width: 100%;
+                /* เว้นที่ด้านบนให้ปุ่มเมนูนิดหน่อย */
+                padding: 80px 20px 20px 20px;
+            }
+
+            .menu-btn {
+                display: block;
+            }
+
+            /* โชว์ปุ่ม */
+            .close-sidebar-btn {
+                display: block;
+            }
+
+            /* โชว์ปุ่มปิดในเมนู */
+
+            #main {
+                font-size: 16px;
+                line-height: 1.6;
+            }
         }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
     <div id="overlay" onclick="toggleSidebar()"></div>
-    <div style="padding: 15px; border-bottom: 2px solid var(--accent-color); background: var(--hover-color);">
-        <label style="font-size: 12px; font-weight: bold;">➕ เพิ่มนิยายใหม่ / อัปเดตตอน</label>
-        <input type="text" id="novel-input" placeholder="วางลิงก์ Kakuyomu..." 
-            style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid var(--border-color); box-sizing: border-box;">
-        <button onclick="startTranslation()" style="width: 100%; margin-top: 10px; padding: 10px; font-weight: bold;">
-            🚀 เริ่มการแปลทันที
-        </button>
-    </div>
-
-    <script>
-    function startTranslation() {
-        const url = document.getElementById('novel-input').value;
-        if (!url) return alert("กรุณาวางลิงก์ก่อนครับ");
-
-        fetch('http://localhost:5000/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: url })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message);
-            document.getElementById('novel-input').value = '';
-        })
-        .catch(err => alert("กรุณารันไฟล์ server.py ก่อนใช้งาน: " + err));
-    }
-
-    // แก้ไขฟังก์ชันโหลดข้อมูลเดิมให้ Refresh ทุก 30 วินาที เพื่อดูตอนใหม่
-    setInterval(() => {
-        fetch('novels.json?t=' + Date.now()) // ป้องกัน Cache
-            .then(res => res.json())
-            .then(data => {
-                novelData = data;
-                renderSidebar(); 
-            });
-    }, 30000);
-    </script>
     <div id="sidebar">
+        <div style="padding: 15px; border-bottom: 2px solid var(--accent-color); background: var(--hover-color);">
+            <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">➕ เพิ่มนิยายใหม่ /
+                อัปเดตตอน</label>
+            <input type="text" id="novel-input" placeholder="วางลิงก์ Kakuyomu..."
+                style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); box-sizing: border-box; font-family: 'Sarabun', sans-serif;">
+            <button onclick="startTranslation()"
+                style="width: 100%; margin-top: 10px; padding: 10px; font-weight: bold; font-family: 'Sarabun', sans-serif;">
+                🚀 เริ่มการแปลทันที
+            </button>
+            <small style="display: block; margin-top: 8px; font-size: 11px; color: gray; text-align: center;">
+                (ระบบจะเพิ่มเข้าลิสต์ติดตามอัตโนมัติ)
+            </small>
+        </div>
+
         <div class="sidebar-header">
             <span>📚 คลังนิยาย</span>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -178,10 +283,38 @@
                 <button class="close-sidebar-btn" onclick="toggleSidebar()">✕</button>
             </div>
         </div>
+
         <div id="novel-list">
             <div style="padding:20px; text-align:center; color:gray;">กำลังโหลด...</div>
         </div>
     </div>
+
+    <script>
+        function startTranslation() {
+            const url = document.getElementById('novel-input').value;
+            if (!url || !url.includes('kakuyomu.jp')) {
+                return alert("กรุณาวางลิงก์ Kakuyomu ที่ถูกต้องครับ");
+            }
+
+            // ส่งไปที่ GitHub Action Workflow Dispatch
+            // หมายเหตุ: เปลี่ยน URL ให้ตรงกับ Repo ของคุณ
+            const githubActionsUrl = "https://github.com/suparoek2543/novel-translate/actions/workflows/translate.yml";
+
+            if (confirm("ระบบจะเปิดหน้า GitHub เพื่อให้คุณยืนยันการรัน Workflow (วางลิงก์ในช่อง novel_url แล้วกด Run)")) {
+                window.open(githubActionsUrl, "_blank");
+            }
+        }
+
+        // โหลดข้อมูลอัตโนมัติทุก 1 นาที เพื่อเช็คตอนใหม่ที่บอทแปลเสร็จ
+        setInterval(() => {
+            fetch('novels.json?t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    novelData = data;
+                    renderSidebar();
+                });
+        }, 60000);
+    </script>
 
     <div id="main">
         <div class="menu-btn" onclick="toggleSidebar()">☰</div>
@@ -215,14 +348,14 @@
                 if (Array.isArray(data)) { alert("⚠️ โครงสร้าง JSON เก่า"); return; }
                 novelData = data;
                 renderSidebar();
-                
+
                 const lastNovel = localStorage.getItem('lastNovelId');
                 const lastEp = localStorage.getItem('lastEpId');
-                
+
                 if (lastNovel && novelData[lastNovel]) {
                     const details = document.getElementById(`details-${btoa(lastNovel)}`);
                     if (details) details.open = true;
-                    
+
                     const chapters = novelData[lastNovel].chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
                     const idx = chapters.findIndex(c => c.ep_id == lastEp);
                     if (idx !== -1) loadChapter(lastNovel, idx, false);
@@ -236,7 +369,7 @@
         function renderSidebar() {
             const list = document.getElementById('novel-list');
             list.innerHTML = '';
-            
+
             const keys = Object.keys(novelData);
             if (keys.length === 0) { list.innerHTML = '<p style="text-align:center">ไม่พบนิยาย</p>'; return; }
 
@@ -244,13 +377,13 @@
                 const novel = novelData[novelId];
                 const details = document.createElement('details');
                 details.id = `details-${btoa(novelId)}`;
-                
+
                 const summary = document.createElement('summary');
                 summary.innerText = novel.title;
-                
+
                 const div = document.createElement('div');
                 const sortedChapters = novel.chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
-                
+
                 sortedChapters.forEach((ep, index) => {
                     const item = document.createElement('div');
                     item.className = 'chapter-item';
@@ -271,7 +404,7 @@
             currentChapterList = novelData[novelId].chapters.sort((a, b) => parseInt(a.ep_id) - parseInt(b.ep_id));
             currentChapterIndex = index;
             const ep = currentChapterList[index];
-            
+
             document.getElementById('reader-content').innerHTML = `
                 <div style="font-size:14px; color:gray; margin-bottom:10px;">📖 ${novelData[novelId].title}</div>
                 <h1>${ep.title}</h1>
@@ -280,14 +413,14 @@
                 <div style="font-size: 14px; color: gray;">Original: <a href="${ep.link}" target="_blank">Link</a></div>
             `;
             document.getElementById('nav-btns').style.display = 'flex';
-            
+
             document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
             const activeItem = document.getElementById(`ep-${ep.ep_id}`);
-            if(activeItem) activeItem.classList.add('active');
+            if (activeItem) activeItem.classList.add('active');
 
             document.getElementById('main').scrollTop = 0;
-            window.scrollTo(0, 0); 
-            
+            window.scrollTo(0, 0);
+
             localStorage.setItem('lastNovelId', novelId);
             localStorage.setItem('lastEpId', ep.ep_id);
 
@@ -314,4 +447,5 @@
         }
     </script>
 </body>
+
 </html>
