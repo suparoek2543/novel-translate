@@ -23,6 +23,11 @@
         }
         body { margin: 0; font-family: 'Sarabun', sans-serif; background: var(--bg-color); color: var(--text-color); display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
         
+        <div style="padding: 15px; border-bottom: 1px solid var(--border-color);">
+            <input type="text" id="novel-url" placeholder="วางลิงก์ Kakuyomu ที่นี่..." 
+               style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid var(--border-color);">
+            <button onclick="addNewNovel()" style="width: 100%; margin-top: 10px;">➕ เพิ่มนิยาย/แปลใหม่</button>
+        </div>
         /* --- Sidebar (สารบัญ) --- */
         #sidebar { 
             width: 320px; 
